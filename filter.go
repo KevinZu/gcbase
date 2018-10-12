@@ -1,4 +1,4 @@
-package golis
+package gcbase
 
 import "errors"
 
