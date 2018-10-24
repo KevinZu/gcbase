@@ -101,6 +101,35 @@ func (session *Iosession) readData() {
 	}
 }
 
+func (session *Iosession) ReadData() (int, []byte, error) {
+
+	//ioBuffer := NewBuffer()
+	buffer := make([]byte, 512)
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+		if !session.closed {
+			session.Close()
+		}
+
+	}()
+	var n int
+	var err error
+	if !session.closed {
+		n, err = session.conn.Read(buffer)
+		//ioBuffer.PutBytes(buffer[:n])
+		if err != nil {
+			session.Close()
+			return 0, nil, err
+		}
+	} else {
+		return 0, nil, errors.New("session is closed!")
+	}
+
+	return n, buffer, nil
+}
+
 func (session *Iosession) WriteBytes(msg []byte) error {
 
 	if !session.closed {
