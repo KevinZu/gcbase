@@ -43,15 +43,15 @@ func (s *Iosession) Conn() net.Conn {
 }
 
 func (s *Iosession) dealDataCh() {
+	/*
+		var msg interface{}
+		for !s.closed {
+			select {
+			case msg = <-s.dataCh:
+				//fmt.Println("收到消息")
 
-	var msg interface{}
-	for !s.closed {
-		select {
-		case msg = <-s.dataCh:
-			//fmt.Println("收到消息")
-
-		}
-	}
+			}
+		}*/
 }
 
 func (session *Iosession) ReadBytes() ([]byte, int, error) {
@@ -120,7 +120,7 @@ func (session *Iosession) WriteBytes(msg []byte) error {
 func (session *Iosession) Write(message interface{}) error {
 	if !session.closed {
 
-		_, err = session.conn.Write(message)
+		_, err := session.conn.Write(message.([]byte))
 		if err != nil {
 			fmt.Println("write err:", err)
 			return err
