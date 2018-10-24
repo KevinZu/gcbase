@@ -43,16 +43,32 @@ func (s *Iosession) Conn() net.Conn {
 }
 
 func (s *Iosession) dealDataCh() {
-	s.serv.wg.Add(1)
-	defer s.serv.wg.Done()
+
 	var msg interface{}
-	for s.serv.runnable && !s.closed {
+	for !s.closed {
 		select {
 		case msg = <-s.dataCh:
 			//fmt.Println("收到消息")
-			s.serv.filterChain.msgReceived(s, msg)
+
 		}
 	}
+}
+
+func (session *Iosession) ReadBytes() ([]byte, int, error) {
+	session.serv.wg.Add(1)
+	defer session.serv.wg.Done()
+	var n int
+	var err error
+	buffer := make([]byte, 512)
+	if session.serv.runnable && !session.closed {
+		n, err = session.conn.Read(buffer)
+		if err != nil {
+			session.Close()
+			return nil, 0, errors.New("recv error!")
+		}
+	}
+	return buffer, n, nil
+
 }
 
 func (session *Iosession) readData() {
@@ -85,22 +101,34 @@ func (session *Iosession) readData() {
 	}
 }
 
-func (session *Iosession) Write(message interface{}) error {
-	if session.serv.runnable && !session.closed {
-		if msg, ok := session.serv.filterChain.msgSend(session, message); ok {
-			bs, err := session.serv.codecer.Encode(msg)
-			if err != nil {
-				return err
-			}
-			_, err = session.conn.Write(bs)
-			if err != nil {
-				session.serv.filterChain.errorCaught(session, err)
-			}
+func (session *Iosession) WriteBytes(msg []byte) error {
+
+	if !session.closed {
+		_, err := session.conn.Write(msg)
+		if err != nil {
+			fmt.Printf("Send error!")
+			return err
 		}
+	}
+
+	//fmt.Printf("msg: %v \n",msg)
+	//session.conn.Write([]byte{'h','e','l'})
+
+	return nil
+}
+
+func (session *Iosession) Write(message interface{}) error {
+	if !session.closed {
+
+		_, err = session.conn.Write(message)
+		if err != nil {
+			fmt.Println("write err:", err)
+			return err
+		}
+
 		return nil
 	} else {
 		err := errors.New("Iosession is closed")
-		session.serv.filterChain.errorCaught(session, err)
 		return err
 	}
 }
@@ -108,7 +136,6 @@ func (session *Iosession) Write(message interface{}) error {
 //close iosession
 func (this *Iosession) Close() {
 	if !this.closed {
-		this.serv.filterChain.sessionClosed(this)
 		this.closed = true
 	}
 	this.conn.Close()
