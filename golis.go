@@ -126,14 +126,14 @@ func (c *Client) Dial(netPro, laddr string) error {
 		fmt.Println(err)
 		return err
 	}
-	go func() {
-		c.runnable = true
-		c.Session = c.newIoSession(conn)
-		fmt.Printf("+-+    session: %p   client:%p\n", c.Session, c)
-		time.Sleep(20 * time.Millisecond)
-		c.wg.Wait()
-		//fmt.Printf("+------------+    session: %p   client:%p\n", c.Session, c)
-	}()
+	//go func() {
+	c.runnable = true
+	c.Session = c.newIoSession(conn)
+	fmt.Printf("+-+    session: %p   client:%p\n", c.Session, c)
+	time.Sleep(20 * time.Millisecond)
+	//	c.wg.Wait()
+	//fmt.Printf("+------------+    session: %p   client:%p\n", c.Session, c)
+	//}()
 	return nil
 }
 
